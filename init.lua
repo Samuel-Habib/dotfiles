@@ -247,6 +247,11 @@ rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 --
 
+
+
+-- vim.env.PATH = vim.env.PATH .. ':/opt/homebrew/bin'
+
+
 require('lazy').setup({
 
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
@@ -287,7 +292,11 @@ require('lazy').setup({
     },
   },
 
-  { 'kylechui/nvim-surround', event = 'VeryLazy', config = true },
+
+
+
+
+	{ 'kylechui/nvim-surround', event = 'VeryLazy', config = true },
 
   { 'numToStr/Comment.nvim', opts = {} },
 
@@ -296,6 +305,17 @@ require('lazy').setup({
   { 'onsails/lspkind.nvim' },
 
   { 'folke/trouble.nvim', opts = {} },
+
+
+
+    {
+        "rcarriga/nvim-notify",
+        config = function()
+            vim.notify = require("notify")
+        end,
+    },
+
+
 
   {
     'folke/flash.nvim',
@@ -782,46 +802,6 @@ require('lazy').setup({
     end,
   },
 
-  { -- Autoformat
-    'stevearc/conform.nvim',
-    event = { 'BufWritePre' },
-    cmd = { 'ConformInfo' },
-    keys = {
-      {
-        '<leader>f',
-        function()
-          require('conform').format { async = true, lsp_format = 'fallback' }
-        end,
-        mode = '',
-        desc = '[F]ormat buffer',
-      },
-    },
-    opts = {
-      notify_on_error = false,
-      format_on_save = function(bufnr)
-        -- Disable "format_on_save lsp_fallback" for languages that don't
-        -- have a well standardized coding style. You can add additional
-        -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
-        if disable_filetypes[vim.bo[bufnr].filetype] then
-          return nil
-        else
-          return {
-            timeout_ms = 500,
-            lsp_format = 'fallback',
-          }
-        end
-      end,
-      formatters_by_ft = {
-        lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
-      },
-    },
-  },
 
   { -- Autocompletion
     'saghen/blink.cmp',
@@ -934,9 +914,30 @@ require('lazy').setup({
       }
       vim.cmd 'colorscheme rose-pine'
     end,
-  },
+    },
 
-  -- Highlight todo, notes, etc in comments
+
+{
+  "stevearc/conform.nvim",
+  event = { "BufWritePre" },
+  config = function()
+    require("conform").setup({
+      formatters_by_ft = {
+        html = { "prettier" },
+        javascript = { "prettier" },
+        typescript = { "prettier" },
+        css = { "prettier" },
+        json = { "prettier" },
+        lua = { "stylua" },
+      },
+    })
+  end,
+},
+
+
+
+
+    -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
   { -- Collection of various small independent plugins/modules
@@ -992,7 +993,7 @@ require('lazy').setup({
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
         additional_vim_regex_highlighting = { 'ruby' },
       },
-      indent = { enable = true, disable = { 'ruby' } },
+      indent = { enable = true, disable = {  'ruby', 'html' } },
     },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
@@ -1055,6 +1056,19 @@ require('lazy').setup({
 
 vim.opt.number = true
 vim.opt.relativenumber = true
+
+
+
+
+vim.opt.tabstop = 4       -- Number of spaces a <Tab> counts for
+vim.opt.shiftwidth = 4    -- Number of spaces to use for each step of (auto)indent
+vim.opt.softtabstop = 4   -- Number of spaces used when pressing <Tab>
+vim.opt.expandtab = true  -- Use spaces instead of tabs
+
+
+
+
+
 
 vim.cmd [[
   highlight Normal guibg=NONE ctermbg=NONE
