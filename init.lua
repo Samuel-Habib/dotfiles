@@ -293,8 +293,29 @@ require('lazy').setup({
   },
 
 
+    {
+        "HakonHarnes/img-clip.nvim",
+        event = "VeryLazy",
+        opts = {
+            default = {
+                dir_path = "90_assets",      -- where to save pasted images (relative to note)
+                file_name = "%Y-%m-%d-%H%M%S",
+                use_absolute_path = false,   -- keep links relative
+                template = "![$LABEL]($FILE_PATH)", -- Markdown image link
+            },
+        },
+    },
 
-
+    {
+        "3rd/image.nvim",
+        ft = { "markdown" },
+        opts = {
+            backend = "kitty",     -- "kitty" or "wezterm" (auto works for many)
+            integrations = { markdown = { enabled = true } },
+            max_width = 60,        -- tweak to taste
+            max_height = 20,
+        },
+    },
 
 	{ 'kylechui/nvim-surround', event = 'VeryLazy', config = true },
 
@@ -332,6 +353,38 @@ require('lazy').setup({
       },
     },
   },
+
+
+
+    -- Markdown inline rendering (headings, tables, checkboxes, callouts)
+    {
+        'MeanderingProgrammer/render-markdown.nvim',
+        dependencies = {
+            'nvim-treesitter/nvim-treesitter',
+            'nvim-tree/nvim-web-devicons', -- optional
+        },
+        opts = {
+            enabled = true,            -- render on open; toggle cmd below
+            file_types = { 'markdown' }
+        },
+    },
+
+    -- Markdown list bullets & checkbox ergonomics
+    { 'dkarter/bullets.vim', ft = { 'markdown' } },
+
+    -- Optional: browser preview (:MarkdownPreview / :MarkdownPreviewStop)
+
+
+    {
+        "iamcco/markdown-preview.nvim",
+        ft = { "markdown" },                       -- lazy-load on markdown
+        build = "cd app && npm ci",                -- use npm build, not mkdp#util#install
+        init = function()
+            vim.g.mkdp_auto_start = 0
+            vim.g.mkdp_filetypes = { "markdown" }
+        end,
+    },
+
 
   { 'ThePrimeagen/harpoon', branch = 'harpoon2', dependencies = { 'nvim-lua/plenary.nvim' } },
 
@@ -762,6 +815,7 @@ require('lazy').setup({
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
               -- diagnostics = { disable = { 'missing-fields' } },
             },
+            marksman = {},
           },
         },
       }
@@ -782,6 +836,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'marksman',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -1066,9 +1121,13 @@ vim.opt.softtabstop = 4   -- Number of spaces used when pressing <Tab>
 vim.opt.expandtab = true  -- Use spaces instead of tabs
 
 
-
-
-
+-- Folding setup
+vim.o.foldenable = true
+vim.o.foldlevel = 99
+vim.o.foldlevelstart = 99
+vim.o.foldnestmax = 4
+vim.o.foldmethod = "expr"
+vim.o.foldexpr = "nvim_treesitter#foldexpr()"
 
 vim.cmd [[
   highlight Normal guibg=NONE ctermbg=NONE
@@ -1076,3 +1135,15 @@ vim.cmd [[
   highlight SignColumn guibg=NONE ctermbg=NONE
   highlight VertSplit guibg=NONE ctermbg=NONE
 ]]
+
+
+-- Toggle pretty inline rendering
+vim.keymap.set('n', '<leader>mr', '<cmd>RenderMarkdown toggle<CR>', { desc = 'Markdown: render toggle' })
+
+-- Optional: quick preview in browser (only if you enabled markdown-preview)
+vim.keymap.set('n', '<leader>mp', '<cmd>MarkdownPreview<CR>', { desc = 'Markdown: preview' })
+vim.keymap.set('n', '<leader>mP', '<cmd>MarkdownPreviewStop<CR>', { desc = 'Markdown: stop preview' })
+
+
+vim.keymap.set("n", "<leader>mi", function() require("img-clip").paste_image() end,
+  { desc = "Markdown: paste image from clipboard" })
