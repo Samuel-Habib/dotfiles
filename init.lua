@@ -293,6 +293,107 @@ require('lazy').setup({
   },
 
 
+{
+  "mfussenegger/nvim-dap",
+  dependencies = {
+    "rcarriga/nvim-dap-ui",
+    "theHamsta/nvim-dap-virtual-text",
+    "jay-babu/mason-nvim-dap.nvim",
+    "nvim-neotest/nvim-nio",
+  },
+  config = function()
+    local dap, dapui = require("dap"), require("dapui")
+
+    dapui.setup()
+    require("nvim-dap-virtual-text").setup()
+
+    -- get codelldb via Mason
+    require("mason-nvim-dap").setup({
+      ensure_installed = { "codelldb" },
+      automatic_setup = true,
+    })
+
+    -- C and C++
+    dap.configurations.cpp = {
+      {
+        name = "Launch",
+        type = "codelldb",
+        request = "launch",
+        program = function()
+          return vim.fn.input("Executable: ", vim.fn.getcwd() .. "/a.out", "file")
+        end,
+        cwd = "${workspaceFolder}",
+        stopOnEntry = false,
+        args = function()
+          local a = vim.fn.input("Args: ")
+          return a == "" and {} or vim.split(a, " ")
+        end,
+      },
+    }
+    dap.configurations.c = dap.configurations.cpp
+
+    -- open and close UI automatically
+    dap.listeners.after.event_initialized["dapui"] = function() dapui.open() end
+    dap.listeners.before.event_terminated["dapui"] = function() dapui.close() end
+    dap.listeners.before.event_exited["dapui"]      = function() dapui.close() end
+
+    -- keymaps
+    vim.keymap.set("n", "<leader>dd", dapui.toggle, { desc = "DAP UI" })
+    vim.keymap.set("n", "<leader>dc", dap.continue, { desc = "Continue" })
+    vim.keymap.set("n", "<leader>db", dap.toggle_breakpoint, { desc = "Breakpoint" })
+    vim.keymap.set("n", "<leader>dn", dap.step_over, { desc = "Next" })
+    vim.keymap.set("n", "<leader>di", dap.step_into, { desc = "Into" })
+    vim.keymap.set("n", "<leader>do", dap.step_out, { desc = "Out" })
+    vim.keymap.set("n", "<leader>dx", dap.terminate, { desc = "Stop" })
+    -- conditional and log breakpoints
+    vim.keymap.set("n", "<leader>dB", function()
+      dap.set_breakpoint(vim.fn.input("Condition: "))
+    end, { desc = "Cond Breakpoint" })
+    vim.keymap.set("n", "<leader>dL", function()
+      dap.set_breakpoint(nil, nil, vim.fn.input("Log: "))
+    end, { desc = "Log Breakpoint" })
+  end,
+
+
+
+
+    },
+
+
+{
+  "dhruvasagar/vim-table-mode",
+  ft = { "markdown" }, -- only load for markdown
+  config = function()
+    -- toggle table mode with <leader>tm
+    vim.keymap.set("n", "<leader>tm", ":TableModeToggle<CR>", { desc = "Toggle Table Mode" })
+
+    -- optional: auto-enable in markdown
+    vim.g.table_mode_always_active = 0
+  end,
+},
+
+
+{
+  'mickael-menu/zk-nvim',
+  dependencies = { 'nvim-telescope/telescope.nvim' },
+  ft = { 'markdown' },  -- load when you open a markdown file
+  config = function()
+    require('zk').setup({
+      picker = "telescope",
+      auto_attach = { enabled = true },
+    })
+
+    -- Silent warm-up (no UI): primes zk index once
+    local vault = vim.fn.expand('~/Obsidian/second-brain')
+    if vim.fn.executable('zk') == 1 and vim.fn.isdirectory(vault .. '/.zk') == 1 then
+      pcall(function()
+        vim.system({ 'zk', 'list', '--limit', '1' }, { cwd = vault, text = true })
+      end)
+    end
+  end,
+},
+
+
     {
         "HakonHarnes/img-clip.nvim",
         event = "VeryLazy",
@@ -320,8 +421,6 @@ require('lazy').setup({
 	{ 'kylechui/nvim-surround', event = 'VeryLazy', config = true },
 
   { 'numToStr/Comment.nvim', opts = {} },
-
-  { 'folke/which-key.nvim', event = 'VeryLazy', opts = {} },
 
   { 'onsails/lspkind.nvim' },
 
@@ -355,6 +454,32 @@ require('lazy').setup({
   },
 
 
+    {
+        'kevinhwang91/nvim-ufo',
+        dependencies = { 'kevinhwang91/promise-async' },
+        event = 'BufReadPost',                      -- load on real files
+        init = function()
+            vim.o.foldcolumn = '1'
+            vim.o.foldlevel = 99
+            vim.o.foldlevelstart = 99
+            vim.o.foldenable = true
+        end,
+
+        opts = {
+            provider_selector = function(_, ft)
+                if ft == 'markdown' then
+                    return { 'treesitter', 'indent' }   -- safe for markdown
+                end
+                return { 'lsp', 'indent' }            -- lsp first, indent fallback
+            end,
+            open_fold_hl_timeout = 0,
+        },
+
+        keys = {
+            { 'zR', function() require('ufo').openAllFolds() end, desc = 'UFO: open all' },
+            { 'zM', function() require('ufo').closeAllFolds() end, desc = 'UFO: close all' },
+        },
+    },
 
     -- Markdown inline rendering (headings, tables, checkboxes, callouts)
     {
@@ -365,7 +490,8 @@ require('lazy').setup({
         },
         opts = {
             enabled = true,            -- render on open; toggle cmd below
-            file_types = { 'markdown' }
+            file_types = { 'markdown' },
+            treesitter = { ensure_installed = false },
         },
     },
 
@@ -401,7 +527,14 @@ require('lazy').setup({
 
   { 'kdheepak/lazygit.nvim' },
 
-  { 'windwp/nvim-autopairs', event = 'InsertEnter', opts = {} },
+
+{
+  'windwp/nvim-autopairs',
+  event = 'InsertEnter',
+  opts = {
+    map_cr = false,  -- disable <CR> mapping
+  },
+},
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
@@ -815,9 +948,10 @@ require('lazy').setup({
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
               -- diagnostics = { disable = { 'missing-fields' } },
             },
-            marksman = {},
           },
         },
+
+        marksman = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -920,7 +1054,14 @@ require('lazy').setup({
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
-      },
+                -- Confirm selection with Enter; fall back to newline if menu isn't open
+
+                -- Navigate the completion list
+                ['<Tab>']   = { 'select_next', 'fallback' },
+                ['<S-Tab>'] = { 'select_prev', 'fallback' },
+                ['<Down>']  = { 'select_next', 'fallback' },
+                ['<Up>']    = { 'select_prev', 'fallback' },
+            },
 
       appearance = {
         -- 'mono' (default) for 'Nerd Font Mono' or 'normal' for 'Nerd Font'
@@ -1032,31 +1173,27 @@ require('lazy').setup({
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
-  { -- Highlight, edit, and navigate code
-    'nvim-treesitter/nvim-treesitter',
-    build = ':TSUpdate',
-    main = 'nvim-treesitter.configs', -- Sets main module to use for opts
-    -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-    opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
-      -- Autoinstall languages that are not installed
-      auto_install = true,
-      highlight = {
-        enable = true,
-        -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-        --  If you are experiencing weird indenting issues, add the language to
-        --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-        additional_vim_regex_highlighting = { 'ruby' },
-      },
-      indent = { enable = true, disable = {  'ruby', 'html' } },
+  
+
+{ -- Highlight, edit, and navigate code
+  'nvim-treesitter/nvim-treesitter',
+  build = ':TSUpdate',
+  main = 'nvim-treesitter.configs',
+  init = function()
+    -- Use tarballs instead of git to avoid work-tree dir conflicts
+    require('nvim-treesitter.install').prefer_git = false
+  end,
+  opts = {
+    ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+    auto_install = false,  -- avoid surprise installs at startup
+    highlight = {
+      enable = true,
+      additional_vim_regex_highlighting = { 'ruby' },
     },
-    -- There are additional nvim-treesitter modules that you can use to interact
-    -- with nvim-treesitter. You should go explore a few and see what interests you:
-    --
-    --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
-    --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
-    --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+    indent = { enable = true, disable = { 'ruby', 'html' } },
   },
+},
+
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
@@ -1125,9 +1262,7 @@ vim.opt.expandtab = true  -- Use spaces instead of tabs
 vim.o.foldenable = true
 vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
-vim.o.foldnestmax = 4
-vim.o.foldmethod = "expr"
-vim.o.foldexpr = "nvim_treesitter#foldexpr()"
+
 
 vim.cmd [[
   highlight Normal guibg=NONE ctermbg=NONE
@@ -1135,6 +1270,9 @@ vim.cmd [[
   highlight SignColumn guibg=NONE ctermbg=NONE
   highlight VertSplit guibg=NONE ctermbg=NONE
 ]]
+
+
+
 
 
 -- Toggle pretty inline rendering
@@ -1147,3 +1285,222 @@ vim.keymap.set('n', '<leader>mP', '<cmd>MarkdownPreviewStop<CR>', { desc = 'Mark
 
 vim.keymap.set("n", "<leader>mi", function() require("img-clip").paste_image() end,
   { desc = "Markdown: paste image from clipboard" })
+
+
+
+
+
+-- Daily note opener (MM.DD.YY) with template substitution
+local function open_daily_note()
+  local ROOT      = vim.fn.expand('~/Obsidian/second-brain')
+  local daily_dir = ROOT .. '/10_daily/'
+  vim.fn.mkdir(daily_dir, 'p')
+
+  local date     = os.date('%m.%d.%y')                -- MM.DD.YY
+  local filename = daily_dir .. '_' .. date .. '.md'  -- _MM.DD.YY.md
+  local template = ROOT .. '/templates/daily.md'
+
+  if vim.fn.filereadable(filename) == 0 then
+    local content
+    if vim.fn.filereadable(template) == 1 then
+      content = table.concat(vim.fn.readfile(template), '\n')
+    else
+      content = [[# {{date}}
+
+## Tasks
+- [ ]
+
+## Notes
+-
+
+## Reflections
+- ]]
+    end
+    content = content:gsub('{{date}}', date)
+    vim.fn.writefile(vim.split(content, '\n'), filename)
+  end
+
+  vim.cmd('edit ' .. filename)
+end
+
+
+
+-- Keymap + command
+vim.keymap.set("n", "<leader>d", open_daily_note, { desc = "Open Daily Note" })
+vim.api.nvim_create_user_command("Daily", open_daily_note, {})
+
+
+
+
+
+
+-- Insert template into current buffer or new file
+local function insert_template(name)
+  local ROOT = vim.fn.expand("~/Obsidian/second-brain")
+  local template = ROOT .. "/templates/" .. name .. ".md"
+
+  if vim.fn.filereadable(template) == 1 then
+    local lines = vim.fn.readfile(template)
+    local content = table.concat(lines, "\n")
+
+    -- handle date placeholder
+    content = content:gsub("{{date}}", os.date("%m.%d.%y"))
+
+    -- insert into current buffer
+    vim.api.nvim_put(vim.split(content, "\n"), "l", true, true)
+  else
+    print("Template not found: " .. template)
+  end
+end
+
+-- Keymaps
+vim.keymap.set("n", "<leader>tp", function() insert_template("project") end,
+  { desc = "Insert Project Template" })
+
+vim.keymap.set("n", "<leader>ta", function() insert_template("area") end,
+  { desc = "Insert Area Template" })
+
+
+
+-- Table-aware Alt-Enter: smart new row in tables
+local function md_table_newline()
+  local line = vim.api.nvim_get_current_line()
+  if line:match('^%s*|') then
+    local cols = 0
+    for _ in line:gmatch('|') do cols = cols + 1 end
+    cols = math.max(cols - 1, 1)
+
+    local parts = {}
+    for _ = 1, cols do table.insert(parts, '| ') end
+    local newrow = table.concat(parts, ' ') .. '|'
+
+    return '<Esc>o' .. newrow .. '<Esc>0f|la'
+  end
+
+  -- Not in a table: just fall back to a plain newline
+  return '<CR>'
+end
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'markdown',
+  callback = function(args)
+    -- Insert mode: Alt-Enter → smart table row
+    vim.keymap.set('i', '<A-CR>', md_table_newline, {
+      buffer = args.buf,
+      expr = true,
+      desc = 'Markdown: table row on Alt-Enter',
+    })
+
+    -- Normal mode: Alt-Enter → open new row below if on a table line
+    vim.keymap.set('n', '<A-CR>', function()
+      local line = vim.api.nvim_get_current_line()
+      if line:match('^%s*|') then
+        vim.api.nvim_feedkeys(
+          vim.api.nvim_replace_termcodes('o', true, false, true),
+          'n',
+          false
+        )
+        vim.api.nvim_feedkeys(
+          vim.api.nvim_replace_termcodes(md_table_newline(), true, false, true),
+          'i',
+          false
+        )
+      else
+        vim.api.nvim_feedkeys('o', 'n', false)
+      end
+    end, { buffer = args.buf, desc = 'Markdown: table row on Alt-Enter' })
+  end,
+})
+
+-- --- ZK: follow [[wikilink]] under cursor (Markdown only)
+local function zk_follow_link_under_cursor()
+  local line = vim.api.nvim_get_current_line()
+  local col  = vim.api.nvim_win_get_cursor(0)[2] + 1
+
+  local s,e; local i = 1
+  while true do
+    local ss, ee = line:find("%[%[[^%]]-%]%]", i)
+    if not ss then break end
+    if col >= ss and col <= ee then s, e = ss, ee; break end
+    i = ee + 1
+  end
+  if not s then
+    vim.notify("No [[link]] under cursor", vim.log.levels.WARN); return
+  end
+
+  local inner  = line:sub(s, e):match("%[%[([^%]]-)%]%]")
+  local target = inner:gsub("%s*|.*$", "")  -- strip alias
+
+  local zkc = require("zk.commands")
+  local open = zkc.get("ZkNotes")
+  assert(open, "zk command not available")
+
+  open({
+    match = { target },                    -- IMPORTANT: list, not string
+    sort = { "created" },
+    editable = true,
+    notebook_path = vim.fn.expand('~/Obsidian/second-brain'),
+  })
+end
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function(args)
+    vim.keymap.set("n", "gd", zk_follow_link_under_cursor,
+      { buffer = args.buf, desc = "ZK: follow [[wikilink]]" })
+    vim.keymap.set("n", "<CR>", function()
+      local ok = pcall(zk_follow_link_under_cursor)
+      if not ok then
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("\n", true, false, true), "n", false)
+      end
+    end, { buffer = args.buf, desc = "Follow [[link]] or newline" })
+  end,
+})
+
+
+
+
+-- Soft-wrap for prose + continue bullets on <CR>/o + no hard reflow
+vim.api.nvim_create_autocmd('FileType', {
+  callback = function()
+    -- visuals
+    vim.wo.wrap        = true
+    vim.wo.linebreak   = true
+    vim.wo.breakindent = true
+    vim.wo.showbreak   = '↳ '
+
+    -- don't hard-wrap while typing
+    vim.bo.textwidth = 0
+
+    -- q = gq allowed, n = numbered lists, j = join fixes,
+    -- r = continue comments/lists on <CR>, o = continue on o/O
+    vim.bo.formatoptions = 'qnjro'
+  end,
+})
+
+
+
+-- Remember folds between sessions
+vim.opt.viewoptions:append('folds')
+
+local grp = vim.api.nvim_create_augroup('persist_folds', { clear = true })
+vim.api.nvim_create_autocmd('BufWinLeave', {
+  group = grp,
+  callback = function()
+    -- skip special/unlisted buffers
+    if vim.bo.buftype == '' and vim.bo.filetype ~= '' then
+      pcall(vim.cmd, 'mkview')
+    end
+  end,
+})
+vim.api.nvim_create_autocmd('BufWinEnter', {
+  group = grp,
+  callback = function()
+    if vim.bo.buftype == '' and vim.bo.filetype ~= '' then
+      pcall(vim.cmd, 'silent! loadview')
+    end
+  end,
+})
+
+
+
