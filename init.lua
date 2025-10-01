@@ -1504,14 +1504,6 @@ vim.api.nvim_create_autocmd('BufWinEnter', {
 
 --FOR NOW
 
--- Disable error and warning messages on startup
-vim.opt.shortmess:append("I")   -- no intro message
-vim.opt.shortmess:append("c")   -- no ins-completion messages
-vim.opt.shortmess:append("F")   -- skip file info
+-- Swallow all errors
+vim.cmd("silent! autocmd VimEnter * ++nested :")
 
--- Suppress all messages at startup
-vim.cmd([[
-  silent! lua pcall(function()
-    vim.notify = function() end
-  end)
-]])
