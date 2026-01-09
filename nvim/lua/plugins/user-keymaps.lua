@@ -66,6 +66,15 @@ return {
       -- diagnostics quickfix (from your old init)
       ["<leader>q"] = { vim.diagnostic.setloclist, desc = "Diagnostics list" },
 
+      -- Xcodebuild / Swift workflow
+      ["<leader>xb"] = { "<cmd>XcodebuildBuild<cr>", desc = "Build (Xcodebuild)" },
+      ["<leader>xr"] = { "<cmd>XcodebuildRun<cr>", desc = "Run on simulator" },
+      ["<leader>xt"] = { "<cmd>XcodebuildTest<cr>", desc = "Test (Xcodebuild)" },
+      ["<leader>xk"] = { "<cmd>XcodebuildCleanBuild<cr>", desc = "Clean build folder" },
+      ["<leader>xs"] = { "<cmd>XcodebuildSelectScheme<cr>", desc = "Select scheme" },
+      ["<leader>xd"] = { "<cmd>XcodebuildSelectDevice<cr>", desc = "Select device" },
+      ["<leader>xl"] = { "<cmd>XcodebuildToggleLogs<cr>", desc = "Toggle App Logs" },
+
       -- SECOND BRAIN
       ["<leader>da"]  = { open_daily_note,                     desc = "Open Daily Note" },
       ["<leader>tp"] = { function() insert_template("project") end, desc = "Insert Project Template" },
@@ -90,10 +99,6 @@ return {
     local t = vim.tbl_deep_extend("force", opts.mappings.t or {}, {
       ["<Esc><Esc>"] = { "<C-\\><C-n>", desc = "Exit terminal mode" },
     })
-
-    -- for swift console
-    ["<leader>xl"] = { "<cmd>XcodebuildToggleLogs<cr>", desc = "Toggle App Logs" },
-
 
     -- OPTIONAL: if any Astro defaults collide and you want them gone:
     -- n["<leader>ff"] = false  -- example: remove a default mapping
