@@ -49,6 +49,12 @@ return {
       vim.api.nvim_put(vim.split(content, "\n"), "l", true, true)
     end
 
+    local function xcodebuild_setup()
+      vim.cmd("XcodebuildSelectProject")
+      vim.cmd("XcodebuildSelectScheme")
+      vim.cmd("XcodebuildSelectDevice")
+    end
+
     ---------------------------------------------------------------------------
     -- mappings
     ---------------------------------------------------------------------------
