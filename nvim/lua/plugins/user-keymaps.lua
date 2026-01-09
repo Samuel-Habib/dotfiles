@@ -49,6 +49,12 @@ return {
       vim.api.nvim_put(vim.split(content, "\n"), "l", true, true)
     end
 
+    local function xcodebuild_setup()
+      vim.cmd("XcodebuildSelectProject")
+      vim.cmd("XcodebuildSelectScheme")
+      vim.cmd("XcodebuildSelectDevice")
+    end
+
     ---------------------------------------------------------------------------
     -- mappings
     ---------------------------------------------------------------------------
@@ -65,6 +71,17 @@ return {
 
       -- diagnostics quickfix (from your old init)
       ["<leader>q"] = { vim.diagnostic.setloclist, desc = "Diagnostics list" },
+
+      -- Xcodebuild / Swift workflow
+      ["<leader>xa"] = { xcodebuild_setup, desc = "Select project/scheme/device" },
+      ["<leader>xb"] = { "<cmd>XcodebuildBuild<cr>", desc = "Build (Xcodebuild)" },
+      ["<leader>xr"] = { "<cmd>XcodebuildRun<cr>", desc = "Run on simulator" },
+      ["<leader>xt"] = { "<cmd>XcodebuildTest<cr>", desc = "Test (Xcodebuild)" },
+      ["<leader>xk"] = { "<cmd>XcodebuildCleanBuild<cr>", desc = "Clean build folder" },
+      ["<leader>xp"] = { "<cmd>XcodebuildSelectProject<cr>", desc = "Select project/workspace" },
+      ["<leader>xs"] = { "<cmd>XcodebuildSelectScheme<cr>", desc = "Select scheme" },
+      ["<leader>xd"] = { "<cmd>XcodebuildSelectDevice<cr>", desc = "Select device" },
+      ["<leader>xl"] = { "<cmd>XcodebuildToggleLogs<cr>", desc = "Toggle App Logs" },
 
       -- SECOND BRAIN
       ["<leader>da"]  = { open_daily_note,                     desc = "Open Daily Note" },
@@ -90,10 +107,6 @@ return {
     local t = vim.tbl_deep_extend("force", opts.mappings.t or {}, {
       ["<Esc><Esc>"] = { "<C-\\><C-n>", desc = "Exit terminal mode" },
     })
-
-    -- for swift console
-    ["<leader>xl"] = { "<cmd>XcodebuildToggleLogs<cr>", desc = "Toggle App Logs" },
-
 
     -- OPTIONAL: if any Astro defaults collide and you want them gone:
     -- n["<leader>ff"] = false  -- example: remove a default mapping
