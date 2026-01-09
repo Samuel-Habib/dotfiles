@@ -27,7 +27,12 @@ return {
     -- Customize how sourcekit works if needed
     config = {
       sourcekit = {
-        cmd = { "/usr/bin/sourcekit-lsp" }, -- Ensures we use the system one
+        cmd = { "xcrun", "sourcekit-lsp" }, -- Use the Xcode toolchain version
+        root_dir = function(fname)
+          local util = require("lspconfig.util")
+          return util.root_pattern("Package.swift", "*.xcodeproj", "*.xcworkspace")(fname)
+            or util.find_git_ancestor(fname)
+        end,
       },
     },
   },
