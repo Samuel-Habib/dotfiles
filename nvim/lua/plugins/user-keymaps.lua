@@ -73,12 +73,10 @@ return {
       ["<leader>q"] = { vim.diagnostic.setloclist, desc = "Diagnostics list" },
 
       -- Xcodebuild / Swift workflow
-      ["<leader>xa"] = { xcodebuild_setup, desc = "Select project/scheme/device" },
       ["<leader>xb"] = { "<cmd>XcodebuildBuild<cr>", desc = "Build (Xcodebuild)" },
       ["<leader>xr"] = { "<cmd>XcodebuildRun<cr>", desc = "Run on simulator" },
       ["<leader>xt"] = { "<cmd>XcodebuildTest<cr>", desc = "Test (Xcodebuild)" },
       ["<leader>xk"] = { "<cmd>XcodebuildCleanBuild<cr>", desc = "Clean build folder" },
-      ["<leader>xp"] = { "<cmd>XcodebuildSelectProject<cr>", desc = "Select project/workspace" },
       ["<leader>xs"] = { "<cmd>XcodebuildSelectScheme<cr>", desc = "Select scheme" },
       ["<leader>xd"] = { "<cmd>XcodebuildSelectDevice<cr>", desc = "Select device" },
       ["<leader>xl"] = { "<cmd>XcodebuildToggleLogs<cr>", desc = "Toggle App Logs" },
