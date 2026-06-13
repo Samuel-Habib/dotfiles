@@ -1,4 +1,3 @@
-
 -- Override / add your personal keymaps in AstroNvim
 return {
   "AstroNvim/astrocore",
@@ -6,12 +5,16 @@ return {
     ---------------------------------------------------------------------------
     -- helpers (your second-brain functions)
     ---------------------------------------------------------------------------
+    local is_mac = vim.uv.os_uname().sysname == "Darwin"
+    local opener = is_mac and "open" or "xdg-open"
+    local ROOT = vim.env.OBSIDIAN_VAULT_PATH or vim.fn.expand "~/Obsidian/second-brain"
+
     local function open_daily_note()
-      local ROOT      = vim.fn.expand("~/Obsidian/second-brain")
+      local ROOT = vim.env.OBSIDIAN_VAULT_PATH or vim.fn.expand "~/Obsidian/second-brain"
       local daily_dir = ROOT .. "/10_daily/"
       vim.fn.mkdir(daily_dir, "p")
 
-      local date     = os.date("%m.%d.%y")
+      local date = os.date "%m.%d.%y"
       local filename = daily_dir .. "_" .. date .. ".md"
       local template = ROOT .. "/templates/daily.md"
 
@@ -19,7 +22,7 @@ return {
         local content
         if vim.fn.filereadable(template) == 1 then
           content = table.concat(vim.fn.readfile(template), "\n")
-          content = content:gsub("{{date}}", date) 
+          content = content:gsub("{{date}}", date)
         else
           content = ([[# {{date}}
 
@@ -38,21 +41,22 @@ return {
     end
 
     local function insert_template(name)
-      local ROOT = vim.fn.expand("~/Obsidian/second-brain")
+      local ROOT = vim.env.OBSIDIAN_VAULT_PATH or vim.fn.expand "~/Obsidian/second-brain"
+      local daily_dir = ROOT .. "/10_daily/"
       local path = ROOT .. "/templates/" .. name .. ".md"
       if vim.fn.filereadable(path) == 0 then
         print("Template not found: " .. path)
         return
       end
       local content = table.concat(vim.fn.readfile(path), "\n")
-      content = content:gsub("{{date}}", os.date("%m.%d.%y"))
+      content = content:gsub("{{date}}", os.date "%m.%d.%y")
       vim.api.nvim_put(vim.split(content, "\n"), "l", true, true)
     end
 
     local function xcodebuild_setup()
-      vim.cmd("XcodebuildSelectProject")
-      vim.cmd("XcodebuildSelectScheme")
-      vim.cmd("XcodebuildSelectDevice")
+      vim.cmd "XcodebuildSelectProject"
+      vim.cmd "XcodebuildSelectScheme"
+      vim.cmd "XcodebuildSelectDevice"
     end
 
     ---------------------------------------------------------------------------
@@ -82,24 +86,61 @@ return {
       ["<leader>xl"] = { "<cmd>XcodebuildToggleLogs<cr>", desc = "Toggle App Logs" },
 
       -- SECOND BRAIN
-      ["<leader>da"]  = { open_daily_note,                     desc = "Open Daily Note" },
-      ["<leader>tp"] = { function() insert_template("project") end, desc = "Insert Project Template" },
-      ["<leader>ta"] = { function() insert_template("area")    end, desc = "Insert Area Template" },
+      ["<leader>da"] = { open_daily_note, desc = "Open Daily Note" },
+      ["<leader>tp"] = { function() insert_template "project" end, desc = "Insert Project Template" },
+      ["<leader>ta"] = { function() insert_template "area" end, desc = "Insert Area Template" },
 
       -- STM32 helpers
-      ["<leader>mb"] = { function() vim.cmd("w") vim.cmd("terminal make -j") end, desc = "Make build" },
-      ["<leader>mf"] = { function() vim.cmd("w") vim.cmd("terminal make flash") end, desc = "Make flash" },
-      ["<leader>mo"] = { function() vim.cmd("terminal openocd -f openocd.cfg") end, desc = "OpenOCD" },
 
-      -- HAL/CMSIS docs (adjust FW path if needed)
-      ["<leader>hd"] = { function()
-        local fw = vim.env.HOME .. "/STM32Cube/Repository/STM32Cube_FW_F4_V1.28.3"
-        vim.fn.jobstart({ "open", fw.."/Drivers/STM32F4xx_HAL_Driver/Documentation/index.html" })
-      end, desc = "Open HAL Docs" },
-      ["<leader>hc"] = { function()
-        local fw = vim.env.HOME .. "/STM32Cube/Repository/STM32Cube_FW_F4_V1.28.3"
-        vim.fn.jobstart({ "open", fw.."/Drivers/CMSIS/Documentation/Core/html/index.html" })
-      end, desc = "Open CMSIS Docs" },
+      -- Universal Bare-Metal Compilation Shortcut
+      ["<leader>mb"] = {
+        function()
+          vim.cmd "w"
+          -- If the build directory is completely missing, configure it first using your portable toolchain script
+          local cmd
+          if vim.fn.isdirectory "build" == 0 then
+            cmd =
+              "cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi.cmake && cmake --build build -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)"
+          else
+            cmd = "cmake --build build -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)"
+          end
+          vim.cmd("terminal " .. cmd)
+        end,
+        desc = "CMake: Smart Parallel Build",
+      },
+
+      ["<leader>mf"] = {
+        function()
+          vim.cmd "w"
+          -- Compiles and executes the flash target rule defined in your CMakeLists.txt
+          vim.cmd "terminal cmake --build build --target flash"
+        end,
+        desc = "CMake: Flash Hardware",
+      },
+
+      ["<leader>mo"] = {
+        function()
+          -- Spawns the OpenOCD background daemon using native target scripts
+          vim.cmd "terminal openocd -f interface/stlink.cfg -f target/stm32f4x.cfg"
+        end,
+        desc = "OpenOCD Server",
+      },
+
+      -- HAL/CMSIS docs (Universal Cross-Platform Path Mapping)
+      ["<leader>hd"] = {
+        function()
+          local fw = vim.env.HOME .. "/STM32Cube/Repository/STM32Cube_FW_F4_V1.28.3"
+          vim.fn.jobstart { opener, fw .. "/Drivers/STM32F4xx_HAL_Driver/Documentation/index.html" }
+        end,
+        desc = "Open HAL Docs",
+      },
+      ["<leader>hc"] = {
+        function()
+          local fw = vim.env.HOME .. "/STM32Cube/Repository/STM32Cube_FW_F4_V1.28.3"
+          vim.fn.jobstart { opener, fw .. "/Drivers/CMSIS/Documentation/Core/html/index.html" }
+        end,
+        desc = "Open CMSIS Docs",
+      },
     })
 
     local t = vim.tbl_deep_extend("force", opts.mappings.t or {}, {

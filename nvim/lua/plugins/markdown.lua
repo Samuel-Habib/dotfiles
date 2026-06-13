@@ -1,5 +1,3 @@
-
--- lua/plugins/markdown.lua
 return {
   -- Inline MD rendering (headings, tables, checkboxes, callouts)
   {
@@ -51,10 +49,10 @@ return {
     ft = { "markdown" },
     dependencies = { "nvim-telescope/telescope.nvim" },
     config = function()
-      require("zk").setup({
+      require("zk").setup {
         picker = "telescope",
         auto_attach = { enabled = true },
-      })
+      }
     end,
   },
 

@@ -1,16 +1,16 @@
 local aug = vim.api.nvim_create_augroup
-local ac  = vim.api.nvim_create_autocmd
+local ac = vim.api.nvim_create_autocmd
 
--- Soft-wrap & sane prose defaults (if you don't already have this block)
+-- Soft-wrap & sane prose defaults
 ac("FileType", {
   group = aug("md_wrap", { clear = true }),
   pattern = { "markdown", "markdown.mdx" },
   callback = function()
-    vim.wo.wrap        = true
-    vim.wo.linebreak   = true
+    vim.wo.wrap = true
+    vim.wo.linebreak = true
     vim.wo.breakindent = true
-    vim.wo.showbreak   = "↳ "
-    vim.bo.textwidth   = 0
+    vim.wo.showbreak = "↳ "
+    vim.bo.textwidth = 0
     vim.bo.formatoptions = "qnjro"
   end,
 })
@@ -21,16 +21,16 @@ ac("FileType", {
   pattern = "markdown",
   callback = function()
     local o = vim.opt_local
-    o.conceallevel  = 2
+    o.conceallevel = 2
     o.concealcursor = "nc"
-    vim.cmd([=[
+    vim.cmd [=[
       syntax match mdConcealLink  /\v\]\zs\([^)]*\)/ conceal
       syntax match mdConcealImage /\v!\[[^]]*\]\zs\([^)]*\)/ conceal
       syntax match mdConcealAuto  /\v<https?:\/\/[^>]+>/ conceal cchar=↗
       highlight link mdConcealLink  Conceal
       highlight link mdConcealImage Conceal
       highlight link mdConcealAuto  Conceal
-    ]=])
+    ]=]
   end,
 })
 
@@ -38,7 +38,7 @@ ac("FileType", {
 do
   local grp = aug("md_double_colon_rules", { clear = true })
   local function apply()
-    vim.opt_local.conceallevel  = 2
+    vim.opt_local.conceallevel = 2
     vim.opt_local.concealcursor = "nc"
     vim.api.nvim_set_hl(0, "MdColonBoldHL", { bold = true })
     if vim.w.md_bold_id then pcall(vim.fn.matchdelete, vim.w.md_bold_id) end
@@ -48,7 +48,9 @@ do
   end
   ac({ "FileType", "BufWinEnter" }, { group = grp, pattern = "markdown", callback = apply })
   ac({ "TextChanged", "TextChangedI", "ColorScheme", "OptionSet" }, {
-    group = grp, pattern = "markdown", callback = apply,
+    group = grp,
+    pattern = "markdown",
+    callback = apply,
   })
 end
 
@@ -56,8 +58,11 @@ end
 do
   local function md_table_newline()
     local line = vim.api.nvim_get_current_line()
-    if line:match("^%s*|") then
-      local cols = 0; for _ in line:gmatch("|") do cols = cols + 1 end
+    if line:match "^%s*|" then
+      local cols = 0
+      for _ in line:gmatch "|" do
+        cols = cols + 1
+      end
       cols = math.max(cols - 1, 1)
       local newrow = ("| "):rep(cols) .. "|"
       return "<Esc>o" .. newrow .. "<Esc>0f|la"
@@ -71,7 +76,7 @@ do
       vim.keymap.set("i", "<A-CR>", md_table_newline, { buffer = args.buf, expr = true, desc = "MD table: new row" })
       vim.keymap.set("n", "<A-CR>", function()
         local line = vim.api.nvim_get_current_line()
-        if line:match("^%s*|") then
+        if line:match "^%s*|" then
           vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(md_table_newline(), true, false, true), "i", false)
         else
           vim.api.nvim_feedkeys("o", "n", false)
@@ -85,26 +90,31 @@ end
 do
   local function zk_follow_under_cursor()
     local line = vim.api.nvim_get_current_line()
-    local col  = vim.api.nvim_win_get_cursor(0)[2] + 1
-    local s,e; local i = 1
+    local col = vim.api.nvim_win_get_cursor(0)[2] + 1
+    local s, e
+    local i = 1
     while true do
       local ss, ee = line:find("%[%[[^%]]-%]%]", i)
       if not ss then break end
-      if col >= ss and col <= ee then s, e = ss, ee; break end
+      if col >= ss and col <= ee then
+        s, e = ss, ee
+        break
+      end
       i = ee + 1
     end
     if not s then return false end
-    local inner  = line:sub(s, e):match("%[%[([^%]]-)%]%]")
+    local inner = line:sub(s, e):match "%[%[([^%]]-)%]%]"
     local target = inner:gsub("%s*|.*$", "")
     local ok, zkc = pcall(require, "zk.commands")
     if not ok then return false end
-    local open = zkc.get("ZkNotes"); if not open then return false end
-    open({
+    local open = zkc.get "ZkNotes"
+    if not open then return false end
+    open {
       match = { target },
       sort = { "created" },
       editable = true,
-      notebook_path = vim.fn.expand("~/Obsidian/second-brain"),
-    })
+      notebook_path = vim.fn.expand "~/Obsidian/second-brain",
+    }
     return true
   end
   ac("FileType", {
@@ -113,17 +123,16 @@ do
     callback = function(args)
       vim.keymap.set("n", "gd", function()
         if not zk_follow_under_cursor() then vim.notify("No [[link]] under cursor", vim.log.levels.WARN) end
-      end, { buffer = args.buf, desc = "ZK: follow [[link]]" })
+      end, { buffer = args.buf, replace_keycodes = true, desc = "ZK: follow [[link]]" })
+
       vim.keymap.set("n", "<CR>", function()
         if not zk_follow_under_cursor() then
           vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("\n", true, false, true), "n", false)
         end
-      end, { buffer = args.buf, desc = "ZK: follow [[link]] or newline" })
+      end, { buffer = args.buf, replace_keycodes = true, desc = "ZK: follow [[link]] or newline" })
     end,
   })
 end
-
-
 
 -- This will run last in the setup process.
 -- This is just pure lua so anything that doesn't
