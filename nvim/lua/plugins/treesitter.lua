@@ -3,6 +3,8 @@ return {
   branch = "master", -- This branch fixes the --no-bindings error
   build = ":TSUpdate",
   opts = {
-    ensure_installed = { "lua", "vim", "swift", "c" },
+    ensure_installed = { "lua", "vim", "c", "cpp", "python" },
+    sync_install = false,
+    auto_install = false,
   },
 }

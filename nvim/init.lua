@@ -1,9 +1,11 @@
 -- This file simply bootstraps the installation of Lazy.nvim and then calls other files for execution
 -- This file doesn't necessarily need to be touched, BE CAUTIOUS editing this file and proceed at your own risk.
 
-
 vim.opt.autowrite = true
 vim.opt.autowriteall = true
+vim.opt.directory = "/mnt/ramdisk/nvim/swap//"
+vim.opt.undodir = "/mnt/ramdisk/nvim/undo//"
+vim.opt.viewdir = "/mnt/ramdisk/nvim/view//"
 
 local lazypath = vim.env.LAZY or vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
 

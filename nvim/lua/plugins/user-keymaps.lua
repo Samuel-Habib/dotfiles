@@ -10,7 +10,6 @@ return {
     local ROOT = vim.env.OBSIDIAN_VAULT_PATH or vim.fn.expand "~/Obsidian/second-brain"
 
     local function open_daily_note()
-      local ROOT = vim.env.OBSIDIAN_VAULT_PATH or vim.fn.expand "~/Obsidian/second-brain"
       local daily_dir = ROOT .. "/10_daily/"
       vim.fn.mkdir(daily_dir, "p")
 
@@ -72,28 +71,29 @@ return {
       ["<C-j>"] = { "<C-w><C-j>", desc = "Focus down" },
       ["<C-k>"] = { "<C-w><C-k>", desc = "Focus up" },
       ["<C-l>"] = { "<C-w><C-l>", desc = "Focus right" },
+      ["<C-L>"] = false,
 
       -- diagnostics quickfix (from your old init)
-      ["<leader>q"] = { vim.diagnostic.setloclist, desc = "Diagnostics list" },
+      ["<Leader>q"] = { vim.diagnostic.setloclist, desc = "Diagnostics list" },
 
       -- Xcodebuild / Swift workflow
-      ["<leader>xb"] = { "<cmd>XcodebuildBuild<cr>", desc = "Build (Xcodebuild)" },
-      ["<leader>xr"] = { "<cmd>XcodebuildRun<cr>", desc = "Run on simulator" },
-      ["<leader>xt"] = { "<cmd>XcodebuildTest<cr>", desc = "Test (Xcodebuild)" },
-      ["<leader>xk"] = { "<cmd>XcodebuildCleanBuild<cr>", desc = "Clean build folder" },
-      ["<leader>xs"] = { "<cmd>XcodebuildSelectScheme<cr>", desc = "Select scheme" },
-      ["<leader>xd"] = { "<cmd>XcodebuildSelectDevice<cr>", desc = "Select device" },
-      ["<leader>xl"] = { "<cmd>XcodebuildToggleLogs<cr>", desc = "Toggle App Logs" },
+      ["<Leader>xb"] = { "<cmd>XcodebuildBuild<cr>", desc = "Build (Xcodebuild)" },
+      ["<Leader>xr"] = { "<cmd>XcodebuildRun<cr>", desc = "Run on simulator" },
+      ["<Leader>xt"] = { "<cmd>XcodebuildTest<cr>", desc = "Test (Xcodebuild)" },
+      ["<Leader>xk"] = { "<cmd>XcodebuildCleanBuild<cr>", desc = "Clean build folder" },
+      ["<Leader>xs"] = { "<cmd>XcodebuildSelectScheme<cr>", desc = "Select scheme" },
+      ["<Leader>xd"] = { "<cmd>XcodebuildSelectDevice<cr>", desc = "Select device" },
+      ["<Leader>xl"] = { "<cmd>XcodebuildToggleLogs<cr>", desc = "Toggle App Logs" },
 
       -- SECOND BRAIN
-      ["<leader>da"] = { open_daily_note, desc = "Open Daily Note" },
-      ["<leader>tp"] = { function() insert_template "project" end, desc = "Insert Project Template" },
-      ["<leader>ta"] = { function() insert_template "area" end, desc = "Insert Area Template" },
+      ["<Leader>da"] = { open_daily_note, desc = "Open Daily Note" },
+      ["<Leader>tp"] = { function() insert_template "project" end, desc = "Insert Project Template" },
+      ["<Leader>ta"] = { function() insert_template "area" end, desc = "Insert Area Template" },
 
       -- STM32 helpers
 
       -- Universal Bare-Metal Compilation Shortcut
-      ["<leader>mb"] = {
+      ["<Leader>mb"] = {
         function()
           vim.cmd "w"
           -- If the build directory is completely missing, configure it first using your portable toolchain script
@@ -109,7 +109,7 @@ return {
         desc = "CMake: Smart Parallel Build",
       },
 
-      ["<leader>mf"] = {
+      ["<Leader>mf"] = {
         function()
           vim.cmd "w"
           -- Compiles and executes the flash target rule defined in your CMakeLists.txt
@@ -118,7 +118,7 @@ return {
         desc = "CMake: Flash Hardware",
       },
 
-      ["<leader>mo"] = {
+      ["<Leader>mo"] = {
         function()
           -- Spawns the OpenOCD background daemon using native target scripts
           vim.cmd "terminal openocd -f interface/stlink.cfg -f target/stm32f4x.cfg"
@@ -126,15 +126,23 @@ return {
         desc = "OpenOCD Server",
       },
 
+      ["<Leader>mi"] = {
+        function()
+          -- Safely requires the file from lua/utils/cmake_init.lua
+          require("utils.cmake_init").setup_project()
+        end,
+        desc = "CMake: Initialize Project Structure",
+      },
+
       -- HAL/CMSIS docs (Universal Cross-Platform Path Mapping)
-      ["<leader>hd"] = {
+      ["<Leader>hd"] = {
         function()
           local fw = vim.env.HOME .. "/STM32Cube/Repository/STM32Cube_FW_F4_V1.28.3"
           vim.fn.jobstart { opener, fw .. "/Drivers/STM32F4xx_HAL_Driver/Documentation/index.html" }
         end,
         desc = "Open HAL Docs",
       },
-      ["<leader>hc"] = {
+      ["<Leader>hc"] = {
         function()
           local fw = vim.env.HOME .. "/STM32Cube/Repository/STM32Cube_FW_F4_V1.28.3"
           vim.fn.jobstart { opener, fw .. "/Drivers/CMSIS/Documentation/Core/html/index.html" }

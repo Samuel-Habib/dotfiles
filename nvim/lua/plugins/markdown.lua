@@ -2,6 +2,7 @@ return {
   -- Inline MD rendering (headings, tables, checkboxes, callouts)
   {
     "MeanderingProgrammer/render-markdown.nvim",
+    event = "VeryLazy",
     ft = { "markdown" },
     dependencies = {
       "nvim-treesitter/nvim-treesitter",
@@ -15,7 +16,7 @@ return {
   },
 
   -- Better list bullets / checkbox ergonomics
-  { "dkarter/bullets.vim", ft = { "markdown" } },
+  { "dkarter/bullets.vim", event = "VeryLazy", ft = { "markdown" } },
 
   -- Paste images from clipboard to file + markdown link
   {
@@ -34,6 +35,7 @@ return {
   -- Display images inline (Kitty/WezTerm backends)
   {
     "3rd/image.nvim",
+    enabled = false,
     ft = { "markdown" },
     opts = {
       backend = "kitty",
@@ -70,6 +72,7 @@ return {
   -- Optional: table helpers (toggle with <leader>tm)
   {
     "dhruvasagar/vim-table-mode",
+    event = "VeryLazy",
     ft = { "markdown" },
     config = function()
       vim.keymap.set("n", "<leader>tm", ":TableModeToggle<CR>", { desc = "Toggle Table Mode" })

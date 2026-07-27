@@ -19,6 +19,40 @@ return {
       "sourcekit",
       "clangd",
     },
+    mappings = {
+      n = {
+        ["gd"] = {
+          function()
+            vim.lsp.buf.definition {
+              on_list = function(options)
+                local items = options.items
+                if not items or #items == 0 then return end
+
+                local unique_items = {}
+                local seen_paths = {}
+
+                for _, item in ipairs(items) do
+                  local path = item.filename
+                  if path and not seen_paths[path] then
+                    seen_paths[path] = true
+                    table.insert(unique_items, item)
+                  end
+                end
+
+                vim.fn.setqflist({}, " ", { title = options.title, items = unique_items })
+
+                if #unique_items == 1 then
+                  vim.cmd "cfirst"
+                else
+                  vim.cmd "copen"
+                end
+              end,
+            }
+          end,
+          desc = "LSP: Go to definition (Deduplicated)",
+        },
+      },
+    },
     config = {
       sourcekit = {
         cmd = { "xcrun", "sourcekit-lsp" },
@@ -31,22 +65,19 @@ return {
       clangd = {
         cmd = {
           "clangd",
+          "-j=2",
+          "--malloc-trim",
+          "--pch-storage=disk",
           "--background-index",
+          "--background-index-priority=low",
           "--clang-tidy",
           "--header-insertion=iwyu",
           "--completion-style=detailed",
-          "--compile-commands-dir=build",
-          (function()
-            if vim.fn.executable "arm-none-eabi-gcc" == 1 then
-              return "--query-driver=" .. vim.fn.exepath "arm-none-eabi-gcc"
-            else
-              -- Standard fallback location if not found in the global path environment
-              return "--query-driver=/opt/homebrew/bin/arm-none-eabi-gcc"
-            end
-          end)(),
+          "--query-driver=/usr/bin/arm-none-eabi-gcc,/usr/bin/gcc*,/usr/bin/clang*,/root/.platformio/packages/toolchain-xtensa-esp32/bin/*,/root/.platformio/packages/toolchain-xtensa-esp-elf/bin/*",
+          "--limit-results=100",
         },
         capabilities = {
-          offsetEncoding = "utf-8",
+          positionEncodings = { "utf-16", "utf-8" },
         },
         root_dir = function(fname)
           return require("lspconfig.util").root_pattern("compile_commands.json", "compile_flags.txt", ".git")(fname)

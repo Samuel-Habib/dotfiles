@@ -122,18 +122,55 @@ do
     pattern = "markdown",
     callback = function(args)
       vim.keymap.set("n", "gd", function()
-        if not zk_follow_under_cursor() then vim.notify("No [[link]] under cursor", vim.log.levels.WARN) end
-      end, { buffer = args.buf, replace_keycodes = true, desc = "ZK: follow [[link]]" })
+        if vim.bo.filetype == "markdown" then
+          if not zk_follow_under_cursor() then vim.notify("No [[link]] under cursor", vim.log.levels.WARN) end
+        else
+          vim.lsp.buf.definition()
+        end
+      end, { buffer = args.buf, desc = "ZK: follow [[link]] or Fallback" })
 
       vim.keymap.set("n", "<CR>", function()
         if not zk_follow_under_cursor() then
           vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("\n", true, false, true), "n", false)
         end
-      end, { buffer = args.buf, replace_keycodes = true, desc = "ZK: follow [[link]] or newline" })
+      end, { buffer = args.buf, desc = "ZK: follow [[link]] or newline" })
     end,
   })
 end
 
--- This will run last in the setup process.
--- This is just pure lua so anything that doesn't
--- fit in the normal config locations above can go here
+-- Suppress non-critical notifications (only show ERROR and above)
+local original_notify = vim.notify
+vim.notify = function(msg, log_level, opts)
+  if log_level and log_level >= vim.log.levels.ERROR then
+    original_notify(msg, log_level, opts)
+  end
+end
+
+-- Suppress warning/message noise
+vim.opt.shortmess:append "I" -- Don't show the default startup screen
+vim.opt.shortmess:append "W" -- Don't show "written" messages when saving files
+vim.opt.shortmess:append "s" -- Don't show "search hit BOTTOM, continuing at TOP"
+
+-- Automatically sync code to the VM on save for C files, Makefiles, and shell scripts
+ac("BufWritePost", {
+  group = aug("vm_driver_sync", { clear = true }),
+  pattern = { "*.c", "*.h", "Makefile", "*.sh" },
+  callback = function()
+    local path = vim.fn.expand "%:p"
+
+    if path:match "/root/dev/drivers/" then
+      vim.fn.jobstart({ "/root/vm/manage.sh", "sync" }, {
+        detach = true,
+        on_exit = function(_, exit_code)
+          if exit_code == 0 then
+            original_notify("Synced to VM successfully!", vim.log.levels.INFO)
+          else
+            original_notify("VM sync failed!", vim.log.levels.ERROR)
+          end
+        end,
+      })
+    end
+  end,
+})
+
+
